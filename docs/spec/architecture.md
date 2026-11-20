@@ -45,10 +45,11 @@ changesrequested/
 ├── config.yaml                # settings and models; see below
 ├── evals/                     # labeled data (committed)
 │   ├── retrieval_cases.jsonl
-│   └── seeded_bugs/ manifest.jsonl, patches/
+│   └── seeded_bugs/ manifest.jsonl  # changed lines only, no corpus code
 ├── results/                   # raw JSONL, one line per config x case x run
 ├── tests/
-└── docs/ spec/, hypotheses.md, failure-analysis.md, corpora.md, local-model.md
+├── scripts/fetch_corpora.sh   # checks corpora out into corpora/ (gitignored)
+└── docs/ spec/, adr/, hypotheses.md, failure-analysis.md, corpora.md, local-model.md
 ```
 
 ## Stack
