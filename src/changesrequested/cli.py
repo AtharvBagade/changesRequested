@@ -1,8 +1,12 @@
 """Command-line entry point for chreq."""
 
+from pathlib import Path
+
 import typer
+from dotenv import load_dotenv
 
 from changesrequested.config import (
+    CloudModel,
     ConfigError,
     LocalModel,
     endpoint_reachable,
@@ -16,6 +20,12 @@ app = typer.Typer(
 )
 config_app = typer.Typer(help="Inspect config.yaml.", no_args_is_help=True)
 app.add_typer(config_app, name="config")
+
+
+@app.callback()
+def main() -> None:
+    # Keys in ./.env fill in env vars that are not already set.
+    load_dotenv(Path(".env"))
 
 
 def _not_implemented(command: str) -> None:
@@ -58,8 +68,8 @@ def check() -> None:
 
     usable = 0
     for entry in config.models:
-        if entry.unavailable_reason() is not None:
-            status = f"missing key ({entry.api_key_env})"
+        if isinstance(entry, CloudModel) and entry.unavailable_reason():
+            status = f"missing key ({entry.key_env})"
         elif isinstance(entry, LocalModel) and not endpoint_reachable(entry.endpoint):
             status = f"unreachable ({entry.endpoint})"
         else:

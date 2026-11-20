@@ -31,7 +31,7 @@ These are filled in as the tickets land. Update this section in the same PR that
 - Typed Python 3.11+. Small functions. Choose clarity over cleverness.
 - Do not add a dependency or a feature unless a ticket asks for it. Anything outside the ticket's acceptance criteria and the spec's scope table stays out.
 - Settings and model choice come from `config.yaml`. Never hard-code a model id in code.
-- API keys come from environment variables only. Never write a key to a file, a log or a results line.
+- API keys come from environment variables only, optionally loaded from the gitignored `.env`. Never write a key to any other file, a log or a results line.
 - Tests do not call real model APIs. Real-call smoke tests are marked manual.
 
 ## Eval rules

@@ -1,5 +1,6 @@
-# Settings and models for chreq. Holds no secrets: keys are read from the env
-# vars named in api_key_env. Model ids are picked once, before Study B.
+# Settings and models for chreq. Holds no secrets: anthropic reads
+# ANTHROPIC_API_KEY and google reads GEMINI_API_KEY, from the environment or a
+# gitignored .env (copy .env.example). Model ids are picked once, before Study B.
 settings:
   context_token_budget: 6000
   max_attempts: 2
@@ -11,11 +12,9 @@ models:
   - name: claude-main
     provider: anthropic
     model: TODO-pick-before-study-b
-    api_key_env: ANTHROPIC_API_KEY
   - name: gemini-main
     provider: google
     model: TODO-pick-before-study-b
-    api_key_env: GEMINI_API_KEY
   - name: local-main
     provider: ollama
     model: TODO-pick-before-study-b

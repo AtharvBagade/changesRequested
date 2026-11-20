@@ -81,7 +81,6 @@ models:
   - name: claude-main
     provider: anthropic          # anthropic | google | ollama | vllm
     model: <model id>
-    api_key_env: ANTHROPIC_API_KEY
   - name: local-main
     provider: ollama
     model: <model id>
@@ -92,7 +91,8 @@ Every provider follows the same rule: a set of required fields, and one conditio
 
 | Provider | Required fields | Available when |
 | --- | --- | --- |
-| `anthropic`, `google` | `name`, `model`, `api_key_env` | the env var in `api_key_env` is set |
+| `anthropic` | `name`, `model` | `ANTHROPIC_API_KEY` is set |
+| `google` | `name`, `model` | `GEMINI_API_KEY` is set |
 | `ollama`, `vllm` | `name`, `model`, `endpoint` | `endpoint` is set (no network check) |
 
 - A structurally invalid entry, an unknown provider or a duplicate `name` is an error that names the entry.
@@ -100,7 +100,7 @@ Every provider follows the same rule: a set of required fields, and one conditio
 - `chreq review --model <name>` selects one entry. Selecting an unavailable entry is an error that names the missing env var.
 - `chreq eval review` loops over every available entry and reports which entries it skipped.
 - `chreq config check` validates the file, pings each local endpoint, and prints one status line per entry. It exits 0 when at least one model is usable.
-- API keys are read from environment variables named in the file. The file never contains a key.
+- Each cloud provider reads its key from one fixed env var, the SDK default. `chreq` loads a gitignored `./.env` (template: `.env.example`) into the environment without overriding vars that are already set. `config.yaml` is committed and never contains a key.
 - The exact model id and quantization are written into every results line. Do not change an entry's id between runs of the same study.
 
 ## Local model

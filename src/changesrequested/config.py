@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 CONFIG_ENV_VAR = "CHREQ_CONFIG"
 DEFAULT_CONFIG_PATH = Path("config.yaml")
 
+# Each cloud provider reads its key from one fixed env var, the SDK default.
+PROVIDER_KEY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "google": "GEMINI_API_KEY"}
+
 
 class ConfigError(Exception):
     """config.yaml is missing, malformed, or has no usable model."""
@@ -39,32 +42,38 @@ class Settings(BaseModel):
 
 
 class CloudModel(BaseModel):
-    """A hosted model. Available when its API key env var is set."""
+    """A hosted model. Available when its provider's key env var is set."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid", str_strip_whitespace=True, str_min_length=1
+    )
 
     name: str
     provider: Literal["anthropic", "google"]
     model: str
-    api_key_env: str
     endpoint: str | None = None
 
+    @property
+    def key_env(self) -> str:
+        return PROVIDER_KEY_ENV[self.provider]
+
     def unavailable_reason(self) -> str | None:
-        if os.environ.get(self.api_key_env):
+        if os.environ.get(self.key_env):
             return None
-        return f"{self.api_key_env} not set"
+        return f"{self.key_env} not set"
 
 
 class LocalModel(BaseModel):
     """A model served locally. Available when its endpoint is set."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid", str_strip_whitespace=True, str_min_length=1
+    )
 
     name: str
     provider: Literal["ollama", "vllm"]
     model: str
     endpoint: str
-    api_key_env: str | None = None
 
     def unavailable_reason(self) -> str | None:
         return None
@@ -94,11 +103,10 @@ class Config(BaseModel):
     def get_model(self, name: str) -> CloudModel | LocalModel:
         for entry in self.models:
             if entry.name == name:
-                reason = entry.unavailable_reason()
-                if reason is not None:
+                if isinstance(entry, CloudModel) and entry.unavailable_reason():
                     raise MissingApiKeyError(
-                        f"model '{name}' needs env var {entry.api_key_env}, "
-                        "which is not set"
+                        f"model '{name}' needs env var {entry.key_env}, "
+                        "which is not set (export it or add it to .env)"
                     )
                 return entry
         known = ", ".join(entry.name for entry in self.models)
