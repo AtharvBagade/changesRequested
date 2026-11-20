@@ -11,7 +11,7 @@ ModelAdapter.generate_structured(prompt, schema) -> validated object + usage + l
 ```
 
 - Adapters: Claude (Anthropic SDK), Gemini (Google GenAI SDK), local (OpenAI-compatible endpoint).
-- Which adapter and model id to use comes from `models.yaml`. See `architecture.md`.
+- Which adapter and model id to use comes from `config.yaml`. See `architecture.md`.
 - Responses are cached on disk, keyed by a hash of the prompt and model entry, so reruns are free.
 - Schema failures are reported in the result, never raised, so they can be counted.
 - Prompts and the graph are identical across models. A per-model prompt tweak is recorded as a finding, never applied silently.

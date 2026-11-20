@@ -10,7 +10,7 @@ Each ticket links the spec section it implements. Read that before writing code.
 
 | File | Covers |
 | --- | --- |
-| `docs/spec/architecture.md` | Scope, out-of-scope list, repo layout, stack, `models.yaml` |
+| `docs/spec/architecture.md` | Scope, out-of-scope list, repo layout, stack, `config.yaml` |
 | `docs/spec/data.md` | Corpora, retrieval cases, seeded bugs |
 | `docs/spec/retrieval.md` | Chunkers, retrievers, Study A |
 | `docs/spec/agent.md` | Model adapters, LangGraph nodes, verifier |
@@ -24,12 +24,13 @@ These are filled in as the tickets land. Update this section in the same PR that
 - Install: `pip install -e .`
 - Test: `pytest`
 - Lint: `ruff check .`
+- Check config: `chreq config check`
 
 ## Conventions
 
 - Typed Python 3.11+. Small functions. Choose clarity over cleverness.
 - Do not add a dependency or a feature unless a ticket asks for it. Anything outside the ticket's acceptance criteria and the spec's scope table stays out.
-- Model choice comes from `models.yaml`. Never hard-code a model id in code.
+- Settings and model choice come from `config.yaml`. Never hard-code a model id in code.
 - API keys come from environment variables only. Never write a key to a file, a log or a results line.
 - Tests do not call real model APIs. Real-call smoke tests are marked manual.
 

@@ -6,7 +6,7 @@ Every number in the README must be regenerable from files in the repo with one c
 
 Study B runs the full review graph on the seeded bugs with the best retrieval config from Study A fixed, and varies only the model. Crossing the studies only at the end gives a handful of data points instead of a grid nobody can interpret.
 
-**Models:** one Claude model, one Gemini model, and one ~30B open model served locally. They are listed in `models.yaml`. Pick the tiers once, before the first run, and do not change them mid-study. Record the exact model id, quantization and date in every results line.
+**Models:** one Claude model, one Gemini model, and one ~30B open model served locally. They are listed in `config.yaml`; a model whose key is not set is skipped and reported. Pick the tiers once, before the first run, and do not change them mid-study. Record the exact model id, quantization and date in every results line.
 
 **Held constant:** prompts, graph, retrieved context, temperature (0 or the lowest the provider allows), token budgets, and the 15 bugs plus 5 clean diffs. Run each case 3 times and report the spread.
 

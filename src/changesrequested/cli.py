@@ -2,11 +2,20 @@
 
 import typer
 
+from changesrequested.config import (
+    ConfigError,
+    LocalModel,
+    endpoint_reachable,
+    read_config,
+)
+
 app = typer.Typer(
     help="Review a code diff using retrieval over the surrounding repo.",
     context_settings={"help_option_names": ["-h", "--help"]},
     no_args_is_help=True,
 )
+config_app = typer.Typer(help="Inspect config.yaml.", no_args_is_help=True)
+app.add_typer(config_app, name="config")
 
 
 def _not_implemented(command: str) -> None:
@@ -36,3 +45,28 @@ def eval_() -> None:
 def report() -> None:
     """Render README tables from results/."""
     _not_implemented("report")
+
+
+@config_app.command()
+def check() -> None:
+    """Validate config.yaml and report which models are usable."""
+    try:
+        config = read_config()
+    except ConfigError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=1) from None
+
+    usable = 0
+    for entry in config.models:
+        if entry.unavailable_reason() is not None:
+            status = f"missing key ({entry.api_key_env})"
+        elif isinstance(entry, LocalModel) and not endpoint_reachable(entry.endpoint):
+            status = f"unreachable ({entry.endpoint})"
+        else:
+            status = "ok"
+            usable += 1
+        typer.echo(f"{entry.name}: {status}")
+
+    if usable == 0:
+        typer.echo("error: no usable models", err=True)
+        raise typer.Exit(code=1)

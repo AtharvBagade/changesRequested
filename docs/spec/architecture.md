@@ -32,8 +32,8 @@ changesrequested/
 ├── .env.example
 ├── .github/workflows/ci.yml
 ├── src/changesrequested/
-│   ├── cli.py                 # chreq index | review | eval retrieval | eval review | report
-│   ├── config.py              # typed settings: k, budgets, embedding model, paths
+│   ├── cli.py                 # chreq index | review | eval | report | config check
+│   ├── config.py              # loads config.yaml: typed settings and model entries
 │   ├── indexing/
 │   │   ├── chunkers/ naive.py, ast_python.py
 │   │   ├── embed.py           # one fixed embedding model for all studies
@@ -42,7 +42,7 @@ changesrequested/
 │   ├── models/ base.py (protocol), claude.py, gemini.py, local.py
 │   ├── agent/ state.py, nodes.py, graph.py, prompts.py, verifier.py
 │   └── evals/ retrieval_eval.py, review_eval.py, matching.py, report.py
-├── models.yaml                # which models exist; see below
+├── config.yaml                # settings and models; see below
 ├── evals/                     # labeled data (committed)
 │   ├── retrieval_cases.jsonl
 │   └── seeded_bugs/ manifest.jsonl, patches/
@@ -66,24 +66,40 @@ Choices are made for clarity over cleverness.
 | Models | Anthropic SDK, Google GenAI SDK, OpenAI-compatible client for the local server | The local model runs behind Ollama or vLLM, which both expose that API |
 | Quality | pytest, ruff, GitHub Actions, Docker | CI runs unit tests and a smoke eval against a mock model, so it needs no API keys |
 
-## Model selection is configuration
+## Configuration
 
-Models are chosen in `models.yaml`, never in code. Adding or changing a model means editing the file.
+Settings and models live in one file, `config.yaml`, never in code. Adding or changing a model means editing the file. `chreq` reads `./config.yaml`, or the path in the `CHREQ_CONFIG` env var.
 
 ```yaml
+settings:                        # optional; every field has a default
+  context_token_budget: 6000
+  max_attempts: 2
+  naive_chunk_lines: 60
+  naive_chunk_overlap: 10
+  results_dir: results
 models:
   - name: claude-main
-    provider: anthropic          # anthropic | google | openai-compatible
+    provider: anthropic          # anthropic | google | ollama | vllm
     model: <model id>
     api_key_env: ANTHROPIC_API_KEY
   - name: local-main
-    provider: openai-compatible
+    provider: ollama
     model: <model id>
     endpoint: http://localhost:11434/v1
 ```
 
-- `chreq review --model <name>` selects one entry.
-- `chreq eval review` loops over every entry in the file.
+Every provider follows the same rule: a set of required fields, and one condition for being available.
+
+| Provider | Required fields | Available when |
+| --- | --- | --- |
+| `anthropic`, `google` | `name`, `model`, `api_key_env` | the env var in `api_key_env` is set |
+| `ollama`, `vllm` | `name`, `model`, `endpoint` | `endpoint` is set (no network check) |
+
+- A structurally invalid entry, an unknown provider or a duplicate `name` is an error that names the entry.
+- An unavailable entry is skipped with an info log. Loading fails only if no entry is available.
+- `chreq review --model <name>` selects one entry. Selecting an unavailable entry is an error that names the missing env var.
+- `chreq eval review` loops over every available entry and reports which entries it skipped.
+- `chreq config check` validates the file, pings each local endpoint, and prints one status line per entry. It exits 0 when at least one model is usable.
 - API keys are read from environment variables named in the file. The file never contains a key.
 - The exact model id and quantization are written into every results line. Do not change an entry's id between runs of the same study.
 

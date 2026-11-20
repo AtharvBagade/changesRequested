@@ -1,0 +1,22 @@
+# Settings and models for chreq. Holds no secrets: keys are read from the env
+# vars named in api_key_env. Model ids are picked once, before Study B.
+settings:
+  context_token_budget: 6000
+  max_attempts: 2
+  naive_chunk_lines: 60
+  naive_chunk_overlap: 10
+  results_dir: results
+
+models:
+  - name: claude-main
+    provider: anthropic
+    model: TODO-pick-before-study-b
+    api_key_env: ANTHROPIC_API_KEY
+  - name: gemini-main
+    provider: google
+    model: TODO-pick-before-study-b
+    api_key_env: GEMINI_API_KEY
+  - name: local-main
+    provider: ollama
+    model: TODO-pick-before-study-b
+    endpoint: http://localhost:11434/v1
