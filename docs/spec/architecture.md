@@ -1,0 +1,92 @@
+# Architecture
+
+changesrequested (CLI command: `chreq`) reviews a code diff using retrieval over the surrounding repo. It exists to answer one question with numbers: does code-aware chunking make AI code review measurably better, and how do Claude, Gemini and a local ~30B model compare when everything else is held fixed?
+
+## Scope
+
+| In scope | Out of scope |
+| --- | --- |
+| Python target repos only | Multi-language support |
+| AST chunker vs naive chunker | Call-graph or cross-file symbol resolution |
+| Vector, BM25, hybrid (RRF) retrieval, optional reranker | Fine-tuning or training any model |
+| LangGraph review agent with retry loop and deterministic verifier | GitHub App, webhooks, auto-posting PR comments |
+| Adapters for Claude, Gemini and one local ~30B model | IDE plugin or web UI |
+| Retrieval eval and review eval with raw results files | LLM-as-judge for core metrics |
+| CLI, Docker, CI with a mock-model smoke test | FastAPI server (only if days are left over) |
+| Optional trace screenshots (Langfuse or LangSmith) | Integration with auxcord-mcp |
+
+Anything not in the left column needs a ticket before it is built.
+
+## Layers
+
+Four layers (indexing, retrieval, the review agent, the evals) with a thin model layer under the agent. Each layer is testable and swappable without touching the others.
+
+## Repo structure
+
+```text
+changesrequested/
+├── pyproject.toml             # console script: chreq
+├── README.md
+├── CLAUDE.md
+├── Dockerfile
+├── .env.example
+├── .github/workflows/ci.yml
+├── src/changesrequested/
+│   ├── cli.py                 # chreq index | review | eval retrieval | eval review | report
+│   ├── config.py              # typed settings: k, budgets, embedding model, paths
+│   ├── indexing/
+│   │   ├── chunkers/ naive.py, ast_python.py
+│   │   ├── embed.py           # one fixed embedding model for all studies
+│   │   └── store.py           # chunks + metadata in SQLite, vectors in a numpy array
+│   ├── retrieval/ bm25.py, vector.py, hybrid.py (RRF), rerank.py
+│   ├── models/ base.py (protocol), claude.py, gemini.py, local.py
+│   ├── agent/ state.py, nodes.py, graph.py, prompts.py, verifier.py
+│   └── evals/ retrieval_eval.py, review_eval.py, matching.py, report.py
+├── models.yaml                # which models exist; see below
+├── evals/                     # labeled data (committed)
+│   ├── retrieval_cases.jsonl
+│   └── seeded_bugs/ manifest.jsonl, patches/
+├── results/                   # raw JSONL, one line per config x case x run
+├── tests/
+└── docs/ spec/, hypotheses.md, failure-analysis.md, corpora.md, local-model.md
+```
+
+## Stack
+
+Choices are made for clarity over cleverness.
+
+| Part | Choice | Why |
+| --- | --- | --- |
+| Language | Python 3.11+ | The stdlib `ast` module parses Python with no extra dependency |
+| CLI | Typer | Small, typed, generates `--help` |
+| Schemas | Pydantic | One definition for state, findings and structured model output |
+| Retrieval | `rank_bm25`, numpy cosine search, SQLite metadata | A few thousand chunks do not need a vector database |
+| Embeddings | One small local sentence-transformers model | Free to run, identical across every experiment |
+| Agent | LangGraph | The retry loop maps onto graph edges |
+| Models | Anthropic SDK, Google GenAI SDK, OpenAI-compatible client for the local server | The local model runs behind Ollama or vLLM, which both expose that API |
+| Quality | pytest, ruff, GitHub Actions, Docker | CI runs unit tests and a smoke eval against a mock model, so it needs no API keys |
+
+## Model selection is configuration
+
+Models are chosen in `models.yaml`, never in code. Adding or changing a model means editing the file.
+
+```yaml
+models:
+  - name: claude-main
+    provider: anthropic          # anthropic | google | openai-compatible
+    model: <model id>
+    api_key_env: ANTHROPIC_API_KEY
+  - name: local-main
+    provider: openai-compatible
+    model: <model id>
+    endpoint: http://localhost:11434/v1
+```
+
+- `chreq review --model <name>` selects one entry.
+- `chreq eval review` loops over every entry in the file.
+- API keys are read from environment variables named in the file. The file never contains a key.
+- The exact model id and quantization are written into every results line. Do not change an entry's id between runs of the same study.
+
+## Local model
+
+The local model runs on a Mac mini M4 Pro with 24 GB. A ~30B mixture-of-experts model at 4-bit is the target; if it does not fit, use a 3-bit quantization or a smaller model and record why in `docs/local-model.md`. Run indexing first and load the local model afterwards, because the embedding model and the 30B model should not be resident together.
