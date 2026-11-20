@@ -25,6 +25,7 @@ These are filled in as the tickets land. Update this section in the same PR that
 - Test: `pytest`
 - Lint: `ruff check .`
 - Check config: `chreq config check`
+- Fetch corpora: `./scripts/fetch_corpora.sh`
 
 ## Conventions
 

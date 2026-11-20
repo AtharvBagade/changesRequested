@@ -27,3 +27,6 @@ ENV/
 
 # Ruff stuff:
 .ruff_cache/
+
+# Eval corpora, checked out by scripts/fetch_corpora.sh
+corpora/
