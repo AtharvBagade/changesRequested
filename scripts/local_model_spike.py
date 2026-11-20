@@ -3,15 +3,16 @@
 The prompt is built at runtime from the pinned structlog checkout in corpora/
 (run scripts/fetch_corpora.sh first), so no corpus code is committed.
 
-Usage: python scripts/local_model_spike.py MODEL [MODEL ...]
-Writes one JSON line per model to results/local_model_spike.jsonl.
+Usage: python scripts/local_model_spike.py [--repeat N] MODEL [MODEL ...]
+Writes one JSON line per model and run to results/local_model_spike.jsonl.
+Each run loads the model fresh, so repeats measure run-to-run spread.
 """
 
+import argparse
 import difflib
 import json
 import re
 import subprocess
-import sys
 import threading
 import time
 import urllib.request
@@ -215,15 +216,20 @@ def run(model: str, prompt: str, changed_line: int) -> dict:
     }
 
 
-def main(models: list[str]) -> None:
+def main(models: list[str], repeat: int) -> None:
     prompt, changed_line = build_prompt()
     OUT.parent.mkdir(exist_ok=True)
     for model in models:
-        result = run(model, prompt, changed_line)
-        print(json.dumps(result), flush=True)
-        with OUT.open("a") as f:
-            f.write(json.dumps(result) + "\n")
+        for n in range(1, repeat + 1):
+            result = {"run": n, **run(model, prompt, changed_line)}
+            print(json.dumps(result), flush=True)
+            with OUT.open("a") as f:
+                f.write(json.dumps(result) + "\n")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("models", nargs="+")
+    parser.add_argument("--repeat", type=int, default=1)
+    args = parser.parse_args()
+    main(args.models, args.repeat)
