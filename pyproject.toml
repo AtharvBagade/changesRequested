@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "changesrequested"
+version = "0.0.1"
+description = "AI code review with retrieval over the surrounding repo, measured with evals."
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12",
+    "pytest>=8",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+chreq = "changesrequested.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/changesrequested"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+extend-select = ["I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
