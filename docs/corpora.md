@@ -25,7 +25,7 @@ Every headline number comes from this corpus at this commit.
 - 15 of 20 modules have a matching `tests/test_<module>.py`, which suits the AST chunker's test-linking heuristic.
 - Plain Python. cattrs has more cross-module coupling, but its core generates code at runtime, which makes bugs hard to seed and label by hand.
 
-**Known risk: memorization.** structlog is public and moderately well known, so the evaluated models may have seen it in training. A model that remembers the original code could spot a seeded bug without retrieval, which would inflate the context-dependent catch rate. This was accepted knowingly. It should be measured once the model adapters exist and reported alongside the results.
+**Known risk: memorization.** structlog is public and moderately well known, so the evaluated models may have seen it in training. A model that remembers the original code could spot a seeded bug without retrieval, which would inflate the context-dependent catch rate. This was accepted knowingly. It is measured by CR-35 ([#39](https://github.com/AtharvBagade/changesRequested/issues/39)) before the full Study B runs and reported alongside the results.
 
 ## Dev corpus: auxcord-mcp
 
