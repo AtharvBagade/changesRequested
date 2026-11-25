@@ -78,6 +78,7 @@ settings:                        # optional; every field has a default
   naive_chunk_lines: 60
   naive_chunk_overlap: 10
   results_dir: results
+  embedding_model: <sentence-transformers id>  # required to index; fixed for every study
 models:
   - name: claude-main
     provider: anthropic          # anthropic | google | ollama | vllm

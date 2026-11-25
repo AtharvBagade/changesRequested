@@ -7,6 +7,8 @@ settings:
   naive_chunk_lines: 60
   naive_chunk_overlap: 10
   results_dir: results
+  # Fixed for every study (CR-05). Do not change it between runs of a study.
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
 
 models:
   - name: claude-main
