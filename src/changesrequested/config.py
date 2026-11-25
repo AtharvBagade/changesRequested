@@ -39,6 +39,9 @@ class Settings(BaseModel):
     naive_chunk_lines: int = 60
     naive_chunk_overlap: int = 10
     results_dir: Path = Path("results")
+    # One sentence-transformers model for every study. No default, so the id
+    # lives only in config.yaml.
+    embedding_model: str | None = None
 
 
 class CloudModel(BaseModel):
