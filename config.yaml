@@ -17,5 +17,5 @@ models:
     model: TODO-pick-before-study-b
   - name: local-main
     provider: ollama
-    model: TODO-pick-before-study-b
+    model: qwen3-coder:30b  # chosen in CR-04, see docs/local-model.md
     endpoint: http://localhost:11434/v1
